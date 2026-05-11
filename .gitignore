@@ -1,0 +1,26 @@
+# ESP-IDF
+build/
+sdkconfig
+sdkconfig.old
+
+# Visual Studio Code
+.vscode/
+
+# Compiled Object files
+*.o
+*.a
+*.d
+
+# Artifacts
+*.bin
+*.elf
+*.map
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
