@@ -1,74 +1,28 @@
-#include <stdio.h>
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/semphr.h"
-#include "freertos/queue.h"
+#include "settings.h"
+#include "hal.h"
+#include "logic.h"
+#include "web.h"
+#include "nvs_flash.h"
+#include "esp_netif.h"
+#include "esp_event.h"
 #include "esp_log.h"
-#include "defs.h"
-#include "structs.h"
 
-static const char *TAG = "UniControl_Main";
+static const char* TAG = "MAIN";
 
-// Global Handles
-SemaphoreHandle_t xObjListMutex = NULL;
-QueueHandle_t xLogQueue = NULL;
-tracked_obj_t global_obj_list[MAX_TRACKED_OBJECTS];
+void app_main() {
+    ESP_LOGI(TAG, "UniControl Pro v5.1.0 Baslatiliyor...");
 
-// Task Prototypes
-void task_can_parser(void *pvParameters);
-void task_hmi_render(void *pvParameters);
-void task_io_logic(void *pvParameters);
-void task_sys_monitor(void *pvParameters);
+    // Cekirdek Modulleri Baslat
+    ESP_ERROR_CHECK(esp_netif_init());
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
 
-void app_main(void) {
-    ESP_LOGI(TAG, "UniControl Pro v5.1.0 Starting...");
+    // Sistemi Hazirla
+    init_settings();
+    hal_init();
+    web_init();
+    
+    // Gorevleri ve is mantigini (FreeRTOS) baslat
+    logic_init();
 
-    // 1. Initialize Mutexes & Queues
-    xObjListMutex = xSemaphoreCreateMutex();
-    xLogQueue = xQueueCreate(LOG_QUEUE_LEN, sizeof(log_event_t));
-
-    if (xObjListMutex == NULL || xLogQueue == NULL) {
-        ESP_LOGE(TAG, "Failed to create IPC objects!");
-        return;
-    }
-
-    // 2. Initialize Hardware (Placeholder for HAL calls)
-    ESP_LOGI(TAG, "Initializing HAL...");
-
-    // 3. Create Tasks
-    xTaskCreatePinnedToCore(task_can_parser, "CAN_Parser", 4096, NULL, PRIO_TASK_CAN, NULL, 1);
-    xTaskCreatePinnedToCore(task_hmi_render, "HMI_Render", 4096, NULL, PRIO_TASK_HMI, NULL, 1);
-    xTaskCreatePinnedToCore(task_io_logic,  "IO_Logic",   2048, NULL, PRIO_TASK_IO,  NULL, 1);
-    xTaskCreatePinnedToCore(task_sys_monitor, "SYS_Mon",  2048, NULL, PRIO_TASK_SYS, NULL, 0);
-
-    ESP_LOGI(TAG, "Scheduler started.");
-}
-
-// Task Stubs
-void task_can_parser(void *pvParameters) {
-    while(1) {
-        // TODO: Implement TWAI receive
-        vTaskDelay(pdMS_TO_TICKS(100));
-    }
-}
-
-void task_hmi_render(void *pvParameters) {
-    while(1) {
-        // TODO: Implement Nextion UART send
-        vTaskDelay(pdMS_TO_TICKS(50));
-    }
-}
-
-void task_io_logic(void *pvParameters) {
-    while(1) {
-        // TODO: Implement IO read/write
-        vTaskDelay(pdMS_TO_TICKS(100));
-    }
-}
-
-void task_sys_monitor(void *pvParameters) {
-    while(1) {
-        ESP_LOGD(TAG, "System Health Check...");
-        vTaskDelay(pdMS_TO_TICKS(5000));
-    }
+    ESP_LOGI(TAG, "Sistem basariyla hazirlandi. Gorevler calisiyor.");
 }
